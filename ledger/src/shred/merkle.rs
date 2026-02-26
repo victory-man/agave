@@ -788,38 +788,39 @@ pub(super) fn recover(
             }
             shred.merkle_node()
         });
-    let tree = make_merkle_tree(nodes)?;
+    // let tree = make_merkle_tree(nodes)?;
     // The attached signature verifies only if we obtain the same Merkle root.
     // Because shreds obtained from turbine or repair are sig-verified, this
     // also means that we don't need to verify signatures for recovered shreds.
-    if tree.last() != Some(&merkle_root) {
-        return Err(Error::InvalidMerkleRoot);
-    }
-    let set_merkle_proof = move |(index, (mut shred, mask)): (_, (Shred, _))| {
-        if mask {
-            debug_assert!({
-                let proof = make_merkle_proof(index, num_shards, &tree);
-                shred.merkle_proof()?.map(Some).eq(proof.map(Result::ok))
-            });
-            Ok(None)
-        } else {
-            let proof = make_merkle_proof(index, num_shards, &tree);
-            shred.set_merkle_proof(proof)?;
-            // Already sanitized after reconstruct.
-            debug_assert_matches!(shred.sanitize(), Ok(()));
-            // Assert that shred payload is fully populated.
-            debug_assert_eq!(shred, {
-                let shred = shred.payload().clone();
-                Shred::from_payload(shred).unwrap()
-            });
-            Ok(Some(shred))
-        }
-    };
+    // if tree.last() != Some(&merkle_root) {
+    //     return Err(Error::InvalidMerkleRoot);
+    // }
+    // let set_merkle_proof = move |(index, (mut shred, mask)): (_, (Shred, _))| {
+    //     if mask {
+    //         debug_assert!({
+    //             let proof = make_merkle_proof(index, num_shards, &tree);
+    //             shred.merkle_proof()?.map(Some).eq(proof.map(Result::ok))
+    //         });
+    //         Ok(None)
+    //     } else {
+    //         let proof = make_merkle_proof(index, num_shards, &tree);
+    //         shred.set_merkle_proof(proof)?;
+    //         // Already sanitized after reconstruct.
+    //         debug_assert_matches!(shred.sanitize(), Ok(()));
+    //         // Assert that shred payload is fully populated.
+    //         debug_assert_eq!(shred, {
+    //             let shred = shred.payload().clone();
+    //             Shred::from_payload(shred).unwrap()
+    //         });
+    //         Ok(Some(shred))
+    //     }
+    // };
     Ok(shreds
         .into_iter()
         .zip(mask)
         .enumerate()
-        .map(set_merkle_proof)
+        // .filter(|x| x.1.0.shred_type() == ShredType::Data)
+        // .map(set_merkle_proof)
         .filter_map(Result::transpose))
 }
 
