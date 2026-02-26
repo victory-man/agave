@@ -815,13 +815,12 @@ pub(super) fn recover(
     //         Ok(Some(shred))
     //     }
     // };
-    Ok(shreds
-        .into_iter()
-        .zip(mask)
-        .enumerate()
-        // .filter(|x| x.1.0.shred_type() == ShredType::Data)
-        // .map(set_merkle_proof)
-        .filter_map(Result::transpose))
+    Ok(shreds.into_iter().map(|shred| Ok(shred)))
+    // .zip(mask)
+    // .enumerate()
+    // .filter(|x| x.1.0.shred_type() == ShredType::Data)
+    // .map(set_merkle_proof)
+    // .filter_map(Result::transpose))
 }
 
 // Compares shreds of the same erasure batch by their erasure shard index
