@@ -50,10 +50,10 @@
 //! So, given a) - c), we must restrict data shred's payload length such that the entire coding
 //! payload can fit into one coding shred / packet.
 
-pub(crate) use self::merkle_tree::{PROOF_ENTRIES_FOR_32_32_BATCH, SIZE_OF_MERKLE_ROOT};
-use std::mem::MaybeUninit;
-use wincode::io::{Reader, Writer};
-use wincode::{SchemaRead, SchemaWrite, TypeMeta};
+pub(crate) use self::{
+    merkle_tree::{PROOF_ENTRIES_FOR_32_32_BATCH, SIZE_OF_MERKLE_ROOT},
+    payload::serde_bytes_payload,
+};
 pub use {
     self::{
         payload::Payload,
@@ -163,10 +163,6 @@ impl ShredFlags {
 #[derive(Debug, Error)]
 pub enum Error {
     #[error(transparent)]
-    WincodeRead(#[from] wincode::ReadError),
-    #[error(transparent)]
-    WincodeWrite(#[from] wincode::WriteError),
-    #[error(transparent)]
     Bincode(#[from] bincode::Error),
     #[error(transparent)]
     Erasure(#[from] reed_solomon_erasure::Error),
@@ -238,9 +234,8 @@ enum ShredVariant {
 }
 
 /// A common header that is present in data and code shred headers
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize, SchemaRead, SchemaWrite)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 struct ShredCommonHeader {
-    #[wincode(with = "Pod<_>")]
     signature: Signature,
     shred_variant: ShredVariant,
     slot: Slot,
@@ -258,7 +253,7 @@ struct DataShredHeader {
 }
 
 /// The coding shred header has FEC information
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize, SchemaRead, SchemaWrite)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 struct CodingShredHeader {
     num_data_shreds: u16,
     num_coding_shreds: u16,
@@ -663,39 +658,6 @@ impl TryFrom<u8> for ShredVariant {
                 _ => Err(Error::InvalidShredVariant),
             }
         }
-    }
-}
-
-impl SchemaWrite for ShredVariant {
-    type Src = Self;
-    const TYPE_META: TypeMeta = TypeMeta::Static {
-        size: 1,
-        zero_copy: false,
-    };
-
-    fn size_of(_src: &Self::Src) -> wincode::WriteResult<usize> {
-        Ok(1)
-    }
-
-    fn write(writer: impl Writer, src: &Self::Src) -> wincode::WriteResult<()> {
-        let repr: u8 = (*src).into();
-        <u8 as SchemaWrite>::write(writer, &repr)
-    }
-}
-
-impl<'a> SchemaRead<'a> for ShredVariant {
-    type Dst = Self;
-    const TYPE_META: TypeMeta = TypeMeta::Static {
-        size: 1,
-        zero_copy: false,
-    };
-
-    fn read(reader: impl Reader<'a>, dst: &mut MaybeUninit<Self::Dst>) -> wincode::ReadResult<()> {
-        let repr = <u8 as SchemaRead>::get(reader)?;
-        let value = Self::try_from(repr)
-            .map_err(|_| wincode::ReadError::InvalidTagEncoding(repr as usize))?;
-        dst.write(value);
-        Ok(())
     }
 }
 

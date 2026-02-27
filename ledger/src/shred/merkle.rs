@@ -765,33 +765,28 @@ pub(super) fn recover(
     drop(shards);
     // Verify and sanitize recovered shreds, re-compute the Merkle tree and set
     // the merkle proof on the recovered shreds.
-    shreds
+    let nodes = shreds
         .iter_mut()
         .zip(&mask)
         .enumerate()
-        .filter(|x| x.1.0.shred_type() == ShredType::Data)
-        .for_each(|(index, (shred, mask))| {
+        .map(|(index, (shred, mask))| {
             if !mask {
                 if index < num_data_shreds {
                     let Shred::ShredData(shred) = shred else {
-                        // return Err(Error::InvalidRecoveredShred);
-                        return;
+                        return Err(Error::InvalidRecoveredShred);
                     };
                     let (common_header, data_header) =
-                        match deserialize_from_with_limit(&shred.payload[..]) {
-                            Ok(x) => x,
-                            Err(_) => {
-                                return;
-                            }
-                        };
+                        deserialize_from_with_limit(&shred.payload[..])?;
                     if shred.common_header != common_header {
-                        // return Err(Error::InvalidRecoveredShred);
-                        return;
+                        return Err(Error::InvalidRecoveredShred);
                     }
                     shred.data_header = data_header;
+                } else if !matches!(shred, Shred::ShredCode(_)) {
+                    return Err(Error::InvalidRecoveredShred);
                 }
-                // shred.sanitize()?;
+                shred.sanitize()?;
             }
+            shred.merkle_node()
         });
     // let tree = make_merkle_tree(nodes)?;
     // The attached signature verifies only if we obtain the same Merkle root.
@@ -876,8 +871,7 @@ fn make_stub_shred(
         // For coding shreds {common,coding} headers are not part of the
         // erasure coded slice and need to be written to the payload here.
         let mut payload = vec![0u8; ShredCode::SIZE_OF_PAYLOAD];
-        // bincode::serialize_into(&mut payload[..], &(&common_header, &coding_header))?;
-        wincode::serialize_into(&mut payload[..], &(&common_header, &coding_header))?;
+        bincode::serialize_into(&mut payload[..], &(&common_header, &coding_header))?;
         Shred::ShredCode(ShredCode {
             common_header,
             coding_header,
