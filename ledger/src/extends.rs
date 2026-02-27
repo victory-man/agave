@@ -1,7 +1,11 @@
-use crate::shred::{CodingShredHeader, ShredCommonHeader};
+use crate::shred::{
+    CodingShredHeader, DataShredHeader, Error, ShredCommonHeader, ShredFlags, ShredVariant,
+};
+use arrayref::array_refs;
 use std::ptr;
 
 impl ShredCommonHeader {
+    #[inline(always)]
     pub fn to_bytes(&self) -> [u8; 83] {
         //     signature: Signature, // 0..64
         //     shred_variant: ShredVariant, 64..65
@@ -40,9 +44,24 @@ impl ShredCommonHeader {
         }
         value
     }
+
+    #[inline(always)]
+    pub fn from_bytes(data: &[u8; 83]) -> Result<Self, Error> {
+        let (signature, shred_variant, slot, index, version, fec_set_index) =
+            array_refs![data, 64, 1, 8, 4, 2, 4];
+        Ok(Self {
+            signature: (*signature).into(),
+            shred_variant: ShredVariant::try_from(shred_variant[0])?,
+            slot: u64::from_le_bytes(*slot),
+            index: u32::from_le_bytes(*index),
+            version: u16::from_le_bytes(*version),
+            fec_set_index: u32::from_le_bytes(*fec_set_index),
+        })
+    }
 }
 
 impl CodingShredHeader {
+    #[inline(always)]
     pub fn to_bytes(&self) -> [u8; 6] {
         let mut value = [0u8; 6];
         unsafe {
@@ -63,6 +82,28 @@ impl CodingShredHeader {
             );
         }
         value
+    }
+
+    #[inline(always)]
+    pub fn from_bytes(data: &[u8; 6]) -> Result<Self, Error> {
+        let (num_data_shreds, num_coding_shreds, position) = array_refs![data, 2, 2, 2];
+        Ok(Self {
+            num_data_shreds: u16::from_le_bytes(*num_data_shreds),
+            num_coding_shreds: u16::from_le_bytes(*num_coding_shreds),
+            position: u16::from_le_bytes(*position),
+        })
+    }
+}
+
+impl DataShredHeader {
+    #[inline(always)]
+    pub fn from_bytes(data: &[u8; 5]) -> Result<Self, Error> {
+        let (parent_offset, flags, size) = array_refs![data, 2, 1, 2];
+        Ok(Self {
+            parent_offset: u16::from_le_bytes(*parent_offset),
+            flags: ShredFlags::from_bits(flags[0]).ok_or(Error::InvalidShredFlags(flags[0]))?,
+            size: u16::from_le_bytes(*size),
+        })
     }
 }
 

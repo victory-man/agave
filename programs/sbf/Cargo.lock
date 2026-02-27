@@ -7484,6 +7484,7 @@ dependencies = [
  "agave-reserved-account-keys",
  "agave-snapshots",
  "anyhow",
+ "arrayref",
  "assert_matches",
  "bincode",
  "bitflags 2.9.4",

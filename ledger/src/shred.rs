@@ -246,7 +246,7 @@ pub struct ShredCommonHeader {
 
 /// The data shred header has parent offset and flags
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
-struct DataShredHeader {
+pub struct DataShredHeader {
     pub parent_offset: u16,
     pub flags: ShredFlags,
     pub size: u16, // common shred header + data shred header + data

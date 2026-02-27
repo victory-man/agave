@@ -1,5 +1,6 @@
 #[cfg(test)]
 use crate::shred::ShredType;
+use arrayref::array_ref;
 use {
     crate::{
         shred::{
@@ -25,8 +26,8 @@ use {
     reed_solomon_erasure::Error::{InvalidIndex, TooFewParityShards},
     solana_clock::Slot,
     solana_hash::Hash,
-    solana_keypair::Keypair,
-    solana_perf::packet::deserialize_from_with_limit,
+    solana_keypair::Keypair
+    ,
     solana_pubkey::Pubkey,
     solana_sha256_hasher::hashv,
     solana_signature::Signature,
@@ -482,8 +483,11 @@ impl<'a> ShredTrait<'a> for ShredData {
             return Err(Error::InvalidPayloadSize(payload.len()));
         }
         payload.truncate(Self::SIZE_OF_PAYLOAD);
-        let (common_header, data_header): (ShredCommonHeader, _) =
-            deserialize_from_with_limit(&payload[..])?;
+        // let (common_header, data_header): (ShredCommonHeader, _) =
+        //     deserialize_from_with_limit(&payload[..])?;
+
+        let common_header = ShredCommonHeader::from_bytes(array_ref![&payload, 0, 83])?;
+        let data_header = DataShredHeader::from_bytes(array_ref![&payload, 83, 5])?;
         if !matches!(common_header.shred_variant, ShredVariant::MerkleData { .. }) {
             return Err(Error::InvalidShredVariant);
         }
@@ -533,8 +537,10 @@ impl<'a> ShredTrait<'a> for ShredCode {
         Payload: From<T>,
     {
         let mut payload = Payload::from(payload);
-        let (common_header, coding_header): (ShredCommonHeader, _) =
-            deserialize_from_with_limit(&payload[..])?;
+        // let (common_header, coding_header): (ShredCommonHeader, _) =
+        //     deserialize_from_with_limit(&payload[..])?;
+        let common_header = ShredCommonHeader::from_bytes(array_ref![&payload, 0, 83])?;
+        let coding_header = CodingShredHeader::from_bytes(array_ref![&payload, 83, 6])?;
         if !matches!(common_header.shred_variant, ShredVariant::MerkleCode { .. }) {
             return Err(Error::InvalidShredVariant);
         }
@@ -776,11 +782,21 @@ pub(super) fn recover(
                     let Shred::ShredData(shred) = shred else {
                         return;
                     };
-                    let (common_header, data_header) =
-                        match deserialize_from_with_limit(&shred.payload[..]) {
-                            Ok(v) => v,
-                            Err(_) => return,
-                        };
+                    // let (common_header, data_header) =
+                    //     match deserialize_from_with_limit(&shred.payload[..]) {
+                    //         Ok(v) => v,
+                    //         Err(_) => return,
+                    //     };
+                    let Ok(common_header) =
+                        ShredCommonHeader::from_bytes(array_ref![&shred.payload[..], 0, 83])
+                    else {
+                        return;
+                    };
+                    let Ok(data_header) =
+                        DataShredHeader::from_bytes(array_ref![&shred.payload[..], 83, 5])
+                    else {
+                        return;
+                    };
                     if shred.common_header != common_header {
                         return;
                     }
