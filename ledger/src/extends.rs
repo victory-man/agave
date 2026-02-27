@@ -16,7 +16,7 @@ impl ShredCommonHeader {
                 self.signature.as_ref().as_ptr(),
                 64,
             );
-            value[64] = u8::from(self.shred_variant);
+            value[64] = self.shred_variant.into();
             SIMDMemoryOps::memcpy_simd_optimized(
                 (&mut value[65..73]).as_mut_ptr(),
                 self.slot.to_le_bytes().as_ptr(),
