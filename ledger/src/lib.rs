@@ -63,6 +63,7 @@ extern crate log;
 extern crate solana_frozen_abi_macro;
 
 mod wire_format_tests;
+mod extends;
 
 #[doc(hidden)]
 pub mod macro_reexports {
