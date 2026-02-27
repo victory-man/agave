@@ -53,7 +53,7 @@
 pub(crate) use self::merkle_tree::{PROOF_ENTRIES_FOR_32_32_BATCH, SIZE_OF_MERKLE_ROOT};
 use std::mem::MaybeUninit;
 use wincode::io::{Reader, Writer};
-use wincode::{SchemaRead, SchemaWrite, TypeMeta};
+use wincode::{ReadResult, SchemaRead, SchemaWrite, TypeMeta, WriteResult};
 pub use {
     self::{
         payload::Payload,
@@ -668,16 +668,12 @@ impl TryFrom<u8> for ShredVariant {
 
 impl SchemaWrite for ShredVariant {
     type Src = Self;
-    const TYPE_META: TypeMeta = TypeMeta::Static {
-        size: 1,
-        zero_copy: false,
-    };
 
-    fn size_of(_src: &Self::Src) -> wincode::WriteResult<usize> {
+    fn size_of(src: &Self::Src) -> WriteResult<usize> {
         Ok(1)
     }
 
-    fn write(writer: impl Writer, src: &Self::Src) -> wincode::WriteResult<()> {
+    fn write(writer: &mut Writer, src: &Self::Src) -> WriteResult<()> {
         let repr: u8 = (*src).into();
         <u8 as SchemaWrite>::write(writer, &repr)
     }
@@ -685,12 +681,8 @@ impl SchemaWrite for ShredVariant {
 
 impl<'a> SchemaRead<'a> for ShredVariant {
     type Dst = Self;
-    const TYPE_META: TypeMeta = TypeMeta::Static {
-        size: 1,
-        zero_copy: false,
-    };
 
-    fn read(reader: impl Reader<'a>, dst: &mut MaybeUninit<Self::Dst>) -> wincode::ReadResult<()> {
+    fn read(reader: &mut Reader<'a>, dst: &mut MaybeUninit<Self::Dst>) -> ReadResult<()> {
         let repr = <u8 as SchemaRead>::get(reader)?;
         let value = Self::try_from(repr)
             .map_err(|_| wincode::ReadError::InvalidTagEncoding(repr as usize))?;
