@@ -78,6 +78,7 @@ pub(crate) enum Shred {
 
 impl Shred {
     dispatch!(fn erasure_shard_index(&self) -> Result<usize, Error>);
+    dispatch!(fn erasure_shard(&self) -> Result<&[u8], Error>);
     dispatch!(fn erasure_shard_mut(&mut self) -> Result<PayloadMutGuard<'_, Range<usize>>, Error>);
     dispatch!(fn merkle_node(&self) -> Result<Hash, Error>);
     dispatch!(fn sanitize(&self) -> Result<(), Error>);
