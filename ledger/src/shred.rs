@@ -229,6 +229,7 @@ pub enum ShredVariant {
     //   0b0111_????  MerkleCode chained resigned
     //   0b1001_????  MerkleData chained
     //   0b1011_????  MerkleData chained resigned
+    #[default]
     MerkleCode { proof_size: u8, resigned: bool }, // 0b01??_????
     MerkleData { proof_size: u8, resigned: bool }, // 0b10??_????
 }
