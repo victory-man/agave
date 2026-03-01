@@ -760,10 +760,41 @@ pub(super) fn recover(
         batch
     };
     // Obtain erasure encoded shards from the shreds and reconstruct shreds.
+    enum ErasureShard<'a> {
+        Present(&'a [u8]),
+        Missing(crate::shred::payload::PayloadMutGuard<'a, std::ops::Range<usize>>),
+    }
+    impl<'a> AsRef<[u8]> for ErasureShard<'a> {
+        #[inline(always)]
+        fn as_ref(&self) -> &[u8] {
+            match self {
+                Self::Present(s) => s,
+                Self::Missing(m) => m.as_ref(),
+            }
+        }
+    }
+    impl<'a> AsMut<[u8]> for ErasureShard<'a> {
+        #[inline(always)]
+        fn as_mut(&mut self) -> &mut [u8] {
+            match self {
+                Self::Present(s) => unsafe {
+                    std::slice::from_raw_parts_mut(s.as_ptr() as *mut u8, s.len())
+                },
+                Self::Missing(m) => m.as_mut(),
+            }
+        }
+    }
+
     let mut shards = shreds
         .iter_mut()
         .zip(&mask)
-        .map(|(shred, &mask)| Ok((shred.erasure_shard_mut()?, mask)))
+        .map(|(shred, &mask)| {
+            if mask {
+                Ok((ErasureShard::Present(shred.erasure_shard()?), mask))
+            } else {
+                Ok((ErasureShard::Missing(shred.erasure_shard_mut()?), mask))
+            }
+        })
         .collect::<Result<Vec<_>, Error>>()?;
     reed_solomon_cache
         .get(num_data_shreds, num_coding_shreds)?
