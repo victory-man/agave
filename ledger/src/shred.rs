@@ -219,7 +219,7 @@ pub enum ShredType {
     Code = 0b0101_1010,
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
+#[derive(Default, Clone, Copy, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[serde(into = "u8", try_from = "u8")]
 pub enum ShredVariant {
     // proof_size is the number of Merkle proof entries, and is encoded in the
@@ -234,7 +234,7 @@ pub enum ShredVariant {
 }
 
 /// A common header that is present in data and code shred headers
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct ShredCommonHeader {
     pub signature: Signature,
     pub shred_variant: ShredVariant,
@@ -253,7 +253,7 @@ pub struct DataShredHeader {
 }
 
 /// The coding shred header has FEC information
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct CodingShredHeader {
     pub num_data_shreds: u16,
     pub num_coding_shreds: u16,

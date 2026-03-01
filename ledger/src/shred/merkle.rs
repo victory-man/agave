@@ -1,6 +1,7 @@
 #[cfg(test)]
 use crate::shred::ShredType;
 use arrayref::array_ref;
+use bytes::Bytes;
 use {
     crate::{
         shred::{
@@ -747,16 +748,32 @@ pub(super) fn recover(
                 return Err(Error::from(InvalidIndex));
             }
             // Push stub shreds as placeholder for the missing shreds in
-            // between.
+            // between. Only create stub for Data shreds, ignore missing code shreds!
             while batch.len() < erasure_shard_index {
-                batch.push(make_stub_shred(batch.len())?);
+                if batch.len() < num_data_shreds {
+                    batch.push(make_stub_shred(batch.len())?);
+                } else {
+                    batch.push(Shred::ShredCode(ShredCode {
+                        common_header: ShredCommonHeader::default(),
+                        coding_header: CodingShredHeader::default(),
+                        payload: crate::shred::payload::Payload::from(Bytes::new()),
+                    }));
+                }
             }
             mask[erasure_shard_index] = true;
             batch.push(shred);
         }
         // Push stub shreds as placeholder for the missing shreds at the end.
         while batch.len() < num_shards {
-            batch.push(make_stub_shred(batch.len())?);
+            if batch.len() < num_data_shreds {
+                batch.push(make_stub_shred(batch.len())?);
+            } else {
+                batch.push(Shred::ShredCode(ShredCode {
+                    common_header: ShredCommonHeader::default(),
+                    coding_header: CodingShredHeader::default(),
+                    payload: crate::shred::payload::Payload::from(Bytes::new()),
+                }));
+            }
         }
         batch
     };
@@ -797,10 +814,10 @@ pub(super) fn recover(
             }
         })
         .collect::<Result<Vec<_>, Error>>()?;
+    // Drop the mut guards to allow further mutation below.
     reed_solomon_cache
         .get(num_data_shreds, num_coding_shreds)?
         .reconstruct_data(&mut shards)?;
-    // Drop the mut guards to allow further mutation below.
     drop(shards);
     // Verify and sanitize recovered shreds, re-compute the Merkle tree and set
     // the merkle proof on the recovered shreds.
