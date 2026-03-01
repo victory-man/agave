@@ -219,7 +219,7 @@ pub enum ShredType {
     Code = 0b0101_1010,
 }
 
-#[derive(Default, Clone, Copy, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[serde(into = "u8", try_from = "u8")]
 pub enum ShredVariant {
     // proof_size is the number of Merkle proof entries, and is encoded in the
@@ -229,9 +229,14 @@ pub enum ShredVariant {
     //   0b0111_????  MerkleCode chained resigned
     //   0b1001_????  MerkleData chained
     //   0b1011_????  MerkleData chained resigned
-    #[default]
     MerkleCode { proof_size: u8, resigned: bool }, // 0b01??_????
     MerkleData { proof_size: u8, resigned: bool }, // 0b10??_????
+}
+
+impl Default for ShredVariant {
+    fn default() -> Self {
+        ShredVariant::MerkleCode { proof_size: 0, resigned: false }
+    }
 }
 
 /// A common header that is present in data and code shred headers
