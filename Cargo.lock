@@ -2035,6 +2035,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b63caa9aa9397e2d9480a9b13673856c78d8ac123288526c37d7839f2a86990"
 
 [[package]]
+name = "colored"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "faf9468729b8cbcea668e36183cb69d317348c2e08e994829fb56ebfdfbaac34"
+dependencies = [
+ "windows-sys 0.48.0",
+]
+
+[[package]]
 name = "combine"
 version = "3.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3543,6 +3552,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "hdrhistogram"
+version = "7.5.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "765c9198f173dd59ce26ff9f95ef0aafd0a0fe01fb9d72841bc5066a4c06511d"
+dependencies = [
+ "byteorder",
+ "num-traits",
+]
+
+[[package]]
 name = "headers"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3653,6 +3672,33 @@ dependencies = [
  "digest 0.9.0",
  "generic-array 0.14.7",
  "hmac 0.8.1",
+]
+
+[[package]]
+name = "hotpath"
+version = "0.2.9"
+source = "git+https://github.com/victory-man/hotpath-rs.git?branch=my#f341922f1b1df8c7eb9b9e0a7973f3ebb8b95ad3"
+dependencies = [
+ "arc-swap",
+ "cfg-if 1.0.4",
+ "colored",
+ "crossbeam-channel",
+ "hdrhistogram",
+ "hotpath-macros",
+ "prettytable-rs",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "hotpath-macros"
+version = "0.2.10"
+source = "git+https://github.com/victory-man/hotpath-rs.git?branch=my#f341922f1b1df8c7eb9b9e0a7973f3ebb8b95ad3"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
 ]
 
 [[package]]
@@ -5552,6 +5598,19 @@ checksum = "3b83ec2d0af5c5c556257ff52c9f98934e243b9fd39604bfb2a9b75ec2e97f18"
 dependencies = [
  "proc-macro2",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "prettytable-rs"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eea25e07510aa6ab6547308ebe3c036016d162b8da920dbb079e3ba8acf3d95a"
+dependencies = [
+ "encode_unicode",
+ "is-terminal",
+ "lazy_static",
+ "term",
+ "unicode-width 0.1.9",
 ]
 
 [[package]]
@@ -9155,6 +9214,7 @@ dependencies = [
  "eager",
  "fs_extra",
  "futures 0.3.31",
+ "hotpath",
  "itertools 0.12.1",
  "lazy-lru",
  "log",
@@ -12625,6 +12685,17 @@ dependencies = [
  "once_cell",
  "rustix 1.0.2",
  "windows-sys 0.61.0",
+]
+
+[[package]]
+name = "term"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c59df8ac95d96ff9bede18eb7300b0fda5e5d8d90960e76f8e14ae765eedbf1f"
+dependencies = [
+ "dirs-next",
+ "rustversion",
+ "winapi 0.3.9",
 ]
 
 [[package]]

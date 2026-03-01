@@ -24,6 +24,11 @@ frozen-abi = [
     "solana-runtime/frozen-abi",
 ]
 agave-unstable-api = []
+hotpath = ["hotpath/hotpath"]
+hotpath-alloc-bytes-total = ["hotpath/hotpath-alloc-bytes-total"]
+hotpath-alloc-bytes-max = ["hotpath/hotpath-alloc-bytes-max"]
+hotpath-alloc-count-total = ["hotpath/hotpath-alloc-count-total"]
+hotpath-alloc-count-max = ["hotpath/hotpath-alloc-count-max"]
 
 [dependencies]
 agave-feature-set = { workspace = true }
@@ -124,6 +129,7 @@ tokio-stream = { workspace = true }
 trees = { workspace = true }
 wincode = { workspace = true }
 arrayref = "0.3.9"
+hotpath = { git = "https://github.com/victory-man/hotpath-rs.git", branch = "my", package = "hotpath" }
 
 [dependencies.rocksdb]
 # Avoid the vendored bzip2 within rocksdb-sys that can cause linker conflicts

@@ -765,9 +765,11 @@ pub(super) fn recover(
         .zip(&mask)
         .map(|(shred, &mask)| Ok((shred.erasure_shard_mut()?, mask)))
         .collect::<Result<Vec<_>, Error>>()?;
-    reed_solomon_cache
+    hotpath::measure_block!("reed_solomon_cache::reconstruct_data", {
+        reed_solomon_cache
         .get(num_data_shreds, num_coding_shreds)?
         .reconstruct_data(&mut shards)?;
+    });
     // Drop the mut guards to allow further mutation below.
     drop(shards);
     // Verify and sanitize recovered shreds, re-compute the Merkle tree and set
